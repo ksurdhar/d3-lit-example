@@ -1,0 +1,15 @@
+.tooltip circle {
+  fill: #356F7B;
+  stroke: #356F7B;
+}
+
+.tooltip-box {
+  fill: white;
+  stroke: #356F7B;
+  stroke-width: 0.5;
+}
+
+.tooltip-text {
+  fill: black;
+  font-size: 12px;
+}
