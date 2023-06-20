@@ -189,7 +189,7 @@ export class LineChart extends LitElement {
       .on('mouseleave', () => mouseleave())
   }
 
-  updated() {
+  protected updated() {
     if (this.linePath && this.line && this.areaPath && this.area) {
       this.linePath
         .datum(this.data)
