@@ -34,10 +34,10 @@ To animate the d3 elements when data has changed, define those transitions in th
 
 ```typescript
 updated() {  
-	this.linePath.datum(this.data)
-		.transition()  
-        .duration(2000)  
-        .attr("d", this.line)  
+  this.linePath.datum(this.data)
+  .transition()
+  .duration(2000)
+  .attr("d", this.line)  
 }
 ```
 Requires the following state declarations at the top of your component:
@@ -52,21 +52,21 @@ protected linePath: Selection<SVGPathElement, ConnectionData[], HTMLElement, any
 Which are set inside of the first draw inside:
 ```typescript
 protected firstUpdated() {
-	...
+	....
+
+  this.line = d3.line<ConnectionData>()
+  .x((d) =>  xScale(d.time))
+  .y((d) =>  yScale(d.connections))
+  .curve(d3.curveMonotoneX)
+  
+  this.linePath = svg
+  .append('path')
+  .datum(this.data)
+  .attr('fill', 'none')
+  .attr('stroke', 'rgba(52, 107, 119)')
+  .attr('stroke-width', 1.5)
+  .attr('d', this.line)
 	
-	this.line = d3.line<ConnectionData>()
-	.x((d) =>  xScale(d.time))
-	.y((d) =>  yScale(d.connections))
-	.curve(d3.curveMonotoneX)
-	
-	this.linePath = svg
-	.append('path')
-	.datum(this.data)
-	.attr('fill', 'none')
-	.attr('stroke', 'rgba(52, 107, 119)')
-	.attr('stroke-width', 1.5)
-	.attr('d', this.line)
-	
-	...
+	....
 }
 ``` 
