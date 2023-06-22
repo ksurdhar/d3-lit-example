@@ -40,6 +40,8 @@ export class LineChart extends LitElement {
   @state()
   protected focusCircle: Selection<SVGCircleElement, unknown, HTMLElement, any>|undefined
 
+  @state()
+  protected focusLine: Selection<SVGLineElement, unknown, HTMLElement, any>|undefined
 
   @state()
   protected data: ConnectionData[]
@@ -153,10 +155,18 @@ export class LineChart extends LitElement {
     this.focusCircle = svg
       .append('circle')
       .attr('r', 5)
-      .attr('class', 'tooltip circle') // Add this class to your CSS
+      .attr('class', 'tooltip circle')
       .style('opacity', 0)
       .style('stroke', 'black')
       .style('fill', 'white')    
+
+    this.focusLine = svg
+      .append('line')
+      .style('stroke', 'black')
+      .style('stroke-dasharray', '3, 3')
+      .style('opacity', 0)
+      .attr('y1', 0)
+      .attr('y2', this.height - margin.bottom);  // line height
 
     const tooltip = d3
       .select('#d3-chart')
@@ -203,14 +213,18 @@ export class LineChart extends LitElement {
       }
     
       this.focusCircle.attr('cx', pos.x).attr('cy', pos.y);
+
+      if (this.focusLine) {
+        this.focusLine
+          .style('opacity', 1)
+          .attr('transform', 'translate(' + pos.x + ',0)');
+      }
       
       tooltip
         .style('left', d3.pointer(e)[0] + 30 + 'px')
         .style('top', d3.pointer(e)[1] + 45 + 'px')
         .html('connections: ' + d.connections);
     }
-  
-  
   
     const mouseleave = () => {
       tooltip.style('opacity', 0)
