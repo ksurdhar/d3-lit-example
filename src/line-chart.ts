@@ -152,14 +152,6 @@ export class LineChart extends LitElement {
       .attr('stroke-width', 1.5)
       .attr('d', this.line)
 
-    this.focusCircle = svg
-      .append('circle')
-      .attr('r', 5)
-      .attr('class', 'tooltip circle')
-      .style('opacity', 0)
-      .style('stroke', 'black')
-      .style('fill', 'white')    
-
     this.focusLine = svg
       .append('line')
       .style('stroke', 'black')
@@ -167,6 +159,14 @@ export class LineChart extends LitElement {
       .style('opacity', 0)
       .attr('y1', 0)
       .attr('y2', this.height - margin.bottom);  // line height
+
+    this.focusCircle = svg
+      .append('circle')
+      .attr('r', 5)
+      .attr('class', 'tooltip circle')
+      .style('opacity', 0)
+      .style('stroke', 'black')
+      .style('fill', 'white')    
 
     const tooltip = d3
       .select('#d3-chart')
@@ -217,7 +217,10 @@ export class LineChart extends LitElement {
       if (this.focusLine) {
         this.focusLine
           .style('opacity', 1)
-          .attr('transform', 'translate(' + pos.x + ',0)');
+          .attr('x1', pos.x)
+          .attr('y1', pos.y)
+          .attr('x2', pos.x)
+          .attr('y2', this.height - margin.bottom);
       }
       
       tooltip
