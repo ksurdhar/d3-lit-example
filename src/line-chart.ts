@@ -11,6 +11,7 @@ interface ConnectionData {
 
 @customElement('line-chart')
 export class LineChart extends LitElement {
+
   protected createRenderRoot() {
     return this
   }
@@ -19,29 +20,32 @@ export class LineChart extends LitElement {
   @property() height: number = 275
 
   @state()
-  protected line: Line<ConnectionData>|undefined
+  protected line: Line<ConnectionData> | undefined
+
   @state()
-  protected area: Area<ConnectionData>|undefined
+  protected area: Area<ConnectionData> | undefined
+
   @state()
   protected linePath: Selection<
     SVGPathElement,
     ConnectionData[],
     HTMLElement,
     any
-  >|undefined
+  > | undefined
+
   @state()
   protected areaPath: Selection<
     SVGPathElement,
     ConnectionData[],
     HTMLElement,
     any
-  >|undefined
+  > | undefined
 
   @state()
-  protected focusCircle: Selection<SVGCircleElement, unknown, HTMLElement, any>|undefined
+  protected focusCircle: Selection<SVGCircleElement, unknown, HTMLElement, any> | undefined
 
   @state()
-  protected focusLine: Selection<SVGLineElement, unknown, HTMLElement, any>|undefined
+  protected focusLine: Selection<SVGLineElement, unknown, HTMLElement, any> | undefined
 
   @state()
   protected data: ConnectionData[]
@@ -57,9 +61,8 @@ export class LineChart extends LitElement {
       { time: new Date(2023, 5, 15, 9, 25), connections: 8 },
       { time: new Date(2023, 5, 15, 9, 30), connections: 20 },
       { time: new Date(2023, 5, 15, 9, 35), connections: 16 },
-      { time: new Date(2023, 5, 15, 9, 40), connections: 25 },
+      { time: new Date(2023, 5, 15, 9, 40), connections: 25 }
     ]
-    
   }
 
   randomizeData() {
@@ -158,7 +161,7 @@ export class LineChart extends LitElement {
       .style('stroke-dasharray', '3, 3')
       .style('opacity', 0)
       .attr('y1', 0)
-      .attr('y2', this.height - margin.bottom);  // line height
+      .attr('y2', this.height - margin.bottom)
 
     this.focusCircle = svg
       .append('circle')
@@ -186,47 +189,60 @@ export class LineChart extends LitElement {
     }
 
     const mousemove = (e: MouseEvent) => {
+      // Select the path element of the line chart
       const pathEl = this.linePath?.node()
       if (!pathEl) return
       if (!this.focusCircle) return
-      const x0 = xScale.invert(d3.pointer(e, this)[0]);
-      const x0Pixel = xScale(x0);
-      const i = d3.bisector((d: ConnectionData) => d.time).left(this.data, x0, 1);
-      const d0 = this.data[i - 1];
-      const d1 = this.data[i];
-      const d = x0.getTime() - d0.time.getTime() > d1.time.getTime() - x0.getTime() ? d1 : d0;
+    
+      // Convert the mouse event's x-coordinate into the corresponding data value
+      const x0 = xScale.invert(d3.pointer(e, this)[0])
       
-      let beginning = 0;
-      let end = pathEl.getTotalLength();
-      let target = null;
-      let pos;
+      // Convert the data value back to pixel coordinates
+      const x0Pixel = xScale(x0)
+    
+      // Find the index of the data item closest to the mouse's x-coordinate
+      const i = d3.bisector((d: ConnectionData) => d.time).left(this.data, x0, 1)
+    
+      // Compare the mouse's x-coordinate to the data items before and after it to decide which one it's closest to
+      const d0 = this.data[i - 1]
+      const d1 = this.data[i]
+      const d = x0.getTime() - d0.time.getTime() > d1.time.getTime() - x0.getTime() ? d1 : d0
+      
+      // Perform binary search on the path to find the point on the line that's closest to the mouse's x-coordinate
+      let beginning = 0
+      let end = pathEl.getTotalLength()
+      let target = null
+      let pos
     
       while (true) {
-        target = Math.floor((beginning + end) / 2);
-        pos = pathEl.getPointAtLength(target);
+        target = Math.floor((beginning + end) / 2)
+        pos = pathEl.getPointAtLength(target)
         if ((target === end || target === beginning) && pos.x !== x0Pixel) {
-          break;
+          break
         }
-        if (pos.x > x0Pixel) end = target;
-        else if (pos.x < x0Pixel) beginning = target;
-        else break; // position found
+        if (pos.x > x0Pixel) end = target
+        else if (pos.x < x0Pixel) beginning = target
+        else break
       }
     
-      this.focusCircle.attr('cx', pos.x).attr('cy', pos.y);
-
+      // Move the focus circle to the point on the line closest to the mouse's x-coordinate
+      this.focusCircle.attr('cx', pos.x).attr('cy', pos.y)
+    
+      // Show the focus line at the position of the focus circle
       if (this.focusLine) {
         this.focusLine
           .style('opacity', 1)
           .attr('x1', pos.x)
           .attr('y1', pos.y)
           .attr('x2', pos.x)
-          .attr('y2', this.height - margin.bottom);
+          .attr('y2', this.height - margin.bottom)
       }
-      
+    
+      // Show the tooltip with the data value closest to the mouse's x-coordinate
       tooltip
         .style('left', d3.pointer(e)[0] + 30 + 'px')
         .style('top', d3.pointer(e)[1] + 45 + 'px')
-        .html('connections: ' + d.connections);
+        .html('connections: ' + d.connections)
     }
   
     const mouseleave = () => {
