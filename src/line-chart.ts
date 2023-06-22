@@ -38,6 +38,10 @@ export class LineChart extends LitElement {
   >|undefined
 
   @state()
+  protected focusCircle: Selection<SVGCircleElement, unknown, HTMLElement, any>|undefined
+
+
+  @state()
   protected data: ConnectionData[]
 
   constructor() {
@@ -146,6 +150,14 @@ export class LineChart extends LitElement {
       .attr('stroke-width', 1.5)
       .attr('d', this.line)
 
+    this.focusCircle = svg
+      .append('circle')
+      .attr('r', 5)
+      .attr('class', 'tooltip circle') // Add this class to your CSS
+      .style('opacity', 0)
+      .style('stroke', 'black')
+      .style('fill', 'white')    
+
     const tooltip = d3
       .select('#d3-chart')
       .append('div')
@@ -160,26 +172,49 @@ export class LineChart extends LitElement {
 
     const mouseover = () => {
       tooltip.style('opacity', 1)
+      if (this.focusCircle) this.focusCircle.style('opacity', 1)
     }
-    const mousemove = (e: MouseEvent) => {
-      const x0 = xScale.invert(d3.pointer(e, this)[0])
-      const i = d3
-        .bisector((d: ConnectionData) => d.time)
-        .left(this.data, x0, 1)
-      const d0 = this.data[i - 1]
-      const d1 = this.data[i]
-      const d =
-        x0.getTime() - d0.time.getTime() > d1.time.getTime() - x0.getTime()
-          ? d1
-          : d0
 
+    const mousemove = (e: MouseEvent) => {
+      const pathEl = this.linePath?.node()
+      if (!pathEl) return
+      if (!this.focusCircle) return
+      const x0 = xScale.invert(d3.pointer(e, this)[0]);
+      const x0Pixel = xScale(x0);
+      const i = d3.bisector((d: ConnectionData) => d.time).left(this.data, x0, 1);
+      const d0 = this.data[i - 1];
+      const d1 = this.data[i];
+      const d = x0.getTime() - d0.time.getTime() > d1.time.getTime() - x0.getTime() ? d1 : d0;
+      
+      let beginning = 0;
+      let end = pathEl.getTotalLength();
+      let target = null;
+      let pos;
+    
+      while (true) {
+        target = Math.floor((beginning + end) / 2);
+        pos = pathEl.getPointAtLength(target);
+        if ((target === end || target === beginning) && pos.x !== x0Pixel) {
+          break;
+        }
+        if (pos.x > x0Pixel) end = target;
+        else if (pos.x < x0Pixel) beginning = target;
+        else break; // position found
+      }
+    
+      this.focusCircle.attr('cx', pos.x).attr('cy', pos.y);
+      
       tooltip
         .style('left', d3.pointer(e)[0] + 30 + 'px')
         .style('top', d3.pointer(e)[1] + 45 + 'px')
-        .html('connections: ' + d.connections)
+        .html('connections: ' + d.connections);
     }
+  
+  
+  
     const mouseleave = () => {
       tooltip.style('opacity', 0)
+      if (this.focusCircle) this.focusCircle.style('opacity', 0)
       d3.select(this).style('stroke', 'none').style('opacity', 0.8)
     }
 
