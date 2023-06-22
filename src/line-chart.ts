@@ -95,6 +95,19 @@ export class LineChart extends LitElement {
       ] as Iterable<number>)
       .range([this.height - margin.bottom, margin.top])
 
+    // Create grid lines
+    const makeYGridlines = () => {
+      return d3.axisLeft(yScale)
+      .ticks(5)
+      .tickSize(-(this.width - margin.left - margin.right))
+    }
+
+    svg.append("g")         
+  .attr("class", "grid")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(makeYGridlines())
+  .attr('opacity', 0.1)
+
     const xAxis = d3.axisBottom(xScale).ticks(5)
     const yAxis = d3.axisLeft(yScale).ticks(5)
 
@@ -248,6 +261,7 @@ export class LineChart extends LitElement {
     const mouseleave = () => {
       tooltip.style('opacity', 0)
       if (this.focusCircle) this.focusCircle.style('opacity', 0)
+      if (this.focusLine) this.focusLine.style('opacity', 0)
       d3.select(this).style('stroke', 'none').style('opacity', 0.8)
     }
 
