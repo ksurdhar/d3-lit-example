@@ -66,7 +66,7 @@ export class LineChart extends LitElement {
   }
 
   randomizeData() {
-    const newData = Array.from({ length: 10 }, (_, idx) => {
+    const newData = Array.from({ length: 9 }, (_, idx) => {
       const connections = Math.floor(Math.random() * 30)
       return { time: new Date(2023, 5, 15, 9, idx * 5), connections }
     })
@@ -103,10 +103,10 @@ export class LineChart extends LitElement {
     }
 
     svg.append("g")         
-  .attr("class", "grid")
-  .attr("transform", `translate(${margin.left},0)`)
-  .call(makeYGridlines())
-  .attr('opacity', 0.1)
+      .attr("class", "grid")
+      .attr("transform", `translate(${margin.left},0)`)
+      .call(makeYGridlines())
+      .attr('opacity', 0.1)
 
     const xAxis = d3.axisBottom(xScale).ticks(5)
     const yAxis = d3.axisLeft(yScale).ticks(5)
