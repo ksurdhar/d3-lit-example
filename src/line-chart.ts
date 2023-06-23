@@ -107,6 +107,7 @@ export class LineChart extends LitElement {
       .attr("transform", `translate(${margin.left},0)`)
       .call(makeYGridlines())
       .attr('opacity', 0.1)
+      .call(g => g.selectAll(".tick text").remove())
 
     const xAxis = d3.axisBottom(xScale).ticks(5)
     const yAxis = d3.axisLeft(yScale).ticks(5)
@@ -115,10 +116,15 @@ export class LineChart extends LitElement {
       .append('g')
       .attr('transform', `translate(0, ${this.height - margin.bottom})`)
       .call(xAxis)
+      .call(g => g.selectAll(".tick line").style('stroke', 'transparent'))
+      .call(g => g.select(".domain").style('stroke', 'transparent'))
     svg
       .append('g')
       .attr('transform', `translate(${margin.left}, 0)`)
       .call(yAxis)
+      .call(g => g.selectAll(".tick line").style('stroke', 'transparent'))
+      .call(g => g.select(".domain").style('stroke', 'transparent'))
+
 
     this.line = d3
       .line<ConnectionData>()
