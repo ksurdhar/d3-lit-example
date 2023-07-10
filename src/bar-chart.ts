@@ -3,10 +3,15 @@ import { customElement, property, state } from 'lit/decorators.js';
 import * as d3 from 'd3';
 import { Selection } from 'd3';
 import './line-chart.css';
+import { createAxes } from './chart-axes';
 
 interface BarChartData {
   time: Date;
   yUnit: number[];
+}
+
+interface ExtendedBarChartData extends BarChartData {
+  [key: string]: number | Date | number[];
 }
 
 @customElement('bar-chart')
@@ -50,65 +55,26 @@ export class BarChart extends LitElement {
 
   protected firstUpdated(_changedProperties: PropertyValues) {
     super.firstUpdated(_changedProperties);
-    const margin = { top: 20, right: 20, bottom: 50, left: 50 };
 
     const svg: Selection<SVGSVGElement, unknown, HTMLElement, any> = d3
-      .select('#d3-chart')
-      .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height);
+    .select('#d3-chart')
+    .append('svg')
+    .attr('width', this.width)
+    .attr('height', this.height);
 
-    const xScale = d3
-      .scaleTime()
-      .domain(d3.extent(this.data, (d) => d.time) as Iterable<number>)
-      .range([margin.left, this.width - margin.left]);
+    const [xScale, yScale] = createAxes(svg, this.height, this.width, this.data)
 
-    const yScale = d3
-      .scaleLinear()
-      .domain([0, d3.max(this.data, (d) => d3.sum(d.yUnit)) || 0])
-      .range([this.height - margin.bottom, margin.top]);
-
-    const makeYGridlines = () => {
-      return d3
-        .axisLeft(yScale)
-        .ticks(5)
-        .tickSize(-(this.width - margin.left - margin.right));
-    };
-
-    svg
-      .append('g')
-      .attr('class', 'grid')
-      .attr('transform', `translate(${margin.left},0)`)
-      .call(makeYGridlines())
-      .attr('opacity', 0.1)
-      .call((g) => g.selectAll('.tick text').remove());
-
-    const xAxis = d3.axisBottom(xScale).ticks(5);
-    const yAxis = d3.axisLeft(yScale).ticks(5);
-
-    svg
-      .append('g')
-      .attr('transform', `translate(13, ${this.height - margin.bottom})`)
-      .call(xAxis)
-      .call((g) => g.selectAll('.tick line').style('stroke', 'transparent'))
-      .call((g) => g.select('.domain').style('stroke', 'transparent'));
-
-    svg
-      .append('g')
-      .attr('transform', `translate(${margin.left}, 0)`)
-      .call(yAxis)
-      .call((g) => g.selectAll('.tick line').style('stroke', 'transparent'))
-      .call((g) => g.select('.domain').style('stroke', 'transparent'));
-
-    const stack = d3.stack<BarChartData>().keys(['0', '1', '2']);
-
+    const maxYLength = Math.max(...this.data.map((d) => d.yUnit.length));
+    const keys = Array.from({ length: maxYLength }, (_, i) => i.toString());
+    const stack = d3.stack<BarChartData>().keys(keys);
     const stackedData = stack(
-      this.data.map((d) => ({
-        ...d,
-        '0': d.yUnit[0],
-        '1': d.yUnit[1],
-        '2': d.yUnit[2],
-      }))
+      this.data.map((d) => {
+        const entry: ExtendedBarChartData = { ...d };
+        d.yUnit.forEach((value, i) => {
+          entry[i.toString()] = value;
+        });
+        return entry;
+      })
     );
 
     const color = d3.scaleOrdinal(['#356F7B', '#6195A1', '#8DBBC7', '#B9E1ED']);
