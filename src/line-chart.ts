@@ -133,7 +133,6 @@ export class LineChart extends LitElement {
   
       const color = d3.scaleOrdinal(["#6f3d30", "#e69727", "#d3e218"]);
   
-
       const barsGroup = svg.append('g')
 
       barsGroup.selectAll('g')
@@ -148,7 +147,7 @@ export class LineChart extends LitElement {
       .attr('x', (d, i) => xScale(this.data[i].time))
       .attr('y', d => yScale(d[1]))
       .attr('height', d => yScale(d[0]) - yScale(d[1]))
-      .attr('width',(this.width - margin.left - margin.right) / this.data.length);
+      .attr('width', 25);
 
   }
 

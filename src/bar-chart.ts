@@ -61,7 +61,7 @@ export class BarChart extends LitElement {
     const xScale = d3
       .scaleTime()
       .domain(d3.extent(this.data, (d) => d.time) as Iterable<number>)
-      .range([margin.left, this.width - margin.right]);
+      .range([margin.left, this.width - margin.left]);
 
     const yScale = d3
       .scaleLinear()
@@ -88,7 +88,7 @@ export class BarChart extends LitElement {
 
     svg
       .append('g')
-      .attr('transform', `translate(0, ${this.height - margin.bottom})`)
+      .attr('transform', `translate(13, ${this.height - margin.bottom})`)
       .call(xAxis)
       .call((g) => g.selectAll('.tick line').style('stroke', 'transparent'))
       .call((g) => g.select('.domain').style('stroke', 'transparent'));
@@ -111,7 +111,7 @@ export class BarChart extends LitElement {
       }))
     );
 
-    const color = d3.scaleOrdinal(['#6f3d30', '#e69727', '#d3e218']);
+    const color = d3.scaleOrdinal(['#356F7B', '#6195A1', '#8DBBC7', '#B9E1ED']);
 
     const barsGroup = svg.append('g');
 
@@ -125,13 +125,10 @@ export class BarChart extends LitElement {
       .data((d) => d)
       .enter()
       .append('rect')
-      .attr('x', (d, i) => xScale(this.data[i].time))
+      .attr('x', (d) => xScale(d.data.time))
       .attr('y', (d) => yScale(d[1]))
       .attr('height', (d) => yScale(d[0]) - yScale(d[1]))
-      .attr(
-        'width',
-        (this.width - margin.left - margin.right) / this.data.length
-      );
+      .attr('width', 30);
   }
 
   render() {
