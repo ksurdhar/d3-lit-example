@@ -17,7 +17,7 @@ export const createAxes = (
   const xScale = d3
     .scaleTime()
     .domain(d3.extent(data, (d) => d.time) as Iterable<number>)
-    .range([margin.left, width - margin.left]);
+    .range([margin.left, width - margin.right]);
 
   const yScale = d3
     .scaleLinear()
