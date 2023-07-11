@@ -1,7 +1,7 @@
 import { html, LitElement, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import * as d3 from 'd3';
-import { Selection } from 'd3';
+import { Selection, Stack } from 'd3';
 import './line-chart.css';
 import { createAxes } from './chart-axes';
 
@@ -24,6 +24,25 @@ export class BarChart extends LitElement {
   @property() height: number = 275;
 
   @state()
+  protected svg:
+    | Selection<SVGSVGElement, unknown, HTMLElement, any>
+    | undefined;
+
+  @state()
+  protected xScale: d3.ScaleTime<number, number, never> | undefined;
+
+  @state()
+  protected yScale: d3.ScaleLinear<number, number, never> | undefined;
+
+  @state()
+  protected stack: Stack<any, BarChartData, string> | undefined;
+
+  @state()
+  protected barGroupPath:
+    | Selection<SVGGElement, unknown, HTMLElement, any>
+    | undefined;
+
+  @state()
   protected data: BarChartData[];
 
   constructor() {
@@ -32,9 +51,11 @@ export class BarChart extends LitElement {
       { time: new Date(2023, 5, 15, 9, 0), yUnit: [12, 7, 5] },
       { time: new Date(2023, 5, 15, 9, 5), yUnit: [20, 10, 10] },
       { time: new Date(2023, 5, 15, 9, 10), yUnit: [10, 5, 5] },
+
       { time: new Date(2023, 5, 15, 9, 15), yUnit: [11, 6, 5] },
       { time: new Date(2023, 5, 15, 9, 20), yUnit: [30, 15, 15] },
       { time: new Date(2023, 5, 15, 9, 25), yUnit: [8, 4, 4] },
+
       { time: new Date(2023, 5, 15, 9, 30), yUnit: [20, 10, 10] },
       { time: new Date(2023, 5, 15, 9, 35), yUnit: [16, 8, 8] },
       { time: new Date(2023, 5, 15, 9, 40), yUnit: [25, 12, 13] },
@@ -51,23 +72,32 @@ export class BarChart extends LitElement {
       return { time: new Date(2023, 5, 15, 9, idx * 5), yUnit };
     });
     this.data = newData;
+    console.log('randomizing');
+
+    const maxYLength = Math.max(...newData.map((d) => d.yUnit.length));
+    const keys = Array.from({ length: maxYLength }, (_, i) => i.toString());
+
+    this.stack = d3.stack<BarChartData>().keys(keys);
   }
 
   protected firstUpdated(_changedProperties: PropertyValues) {
     super.firstUpdated(_changedProperties);
 
-    const svg: Selection<SVGSVGElement, unknown, HTMLElement, any> = d3
-    .select('#d3-chart')
-    .append('svg')
-    .attr('width', this.width)
-    .attr('height', this.height);
+    this.svg = d3
+      .select('#d3-chart')
+      .append('svg')
+      .attr('width', this.width)
+      .attr('height', this.height);
 
-    const [xScale, yScale] = createAxes(svg, this.height, this.width, this.data)
+    const axes = createAxes(this.svg, this.height, this.width, this.data);
+    this.xScale = axes[0];
+    this.yScale = axes[1];
 
     const maxYLength = Math.max(...this.data.map((d) => d.yUnit.length));
     const keys = Array.from({ length: maxYLength }, (_, i) => i.toString());
-    const stack = d3.stack<BarChartData>().keys(keys);
-    const stackedData = stack(
+
+    this.stack = d3.stack<BarChartData>().keys(keys);
+    const stackedData = this.stack(
       this.data.map((d) => {
         const entry: ExtendedBarChartData = { ...d };
         d.yUnit.forEach((value, i) => {
@@ -79,9 +109,9 @@ export class BarChart extends LitElement {
 
     const color = d3.scaleOrdinal(['#356F7B', '#6195A1', '#8DBBC7', '#B9E1ED']);
 
-    const barsGroup = svg.append('g');
+    this.barGroupPath = this.svg.append('g');
 
-    barsGroup
+    this.barGroupPath
       .selectAll('g')
       .data(stackedData)
       .enter()
@@ -91,10 +121,76 @@ export class BarChart extends LitElement {
       .data((d) => d)
       .enter()
       .append('rect')
-      .attr('x', (d) => xScale(d.data.time))
-      .attr('y', (d) => yScale(d[1]))
-      .attr('height', (d) => yScale(d[0]) - yScale(d[1]))
-      .attr('width', 30);
+      .attr('x', (d) => axes[0](d.data.time))
+      .attr('width', 30)
+      .attr('y', (d) => axes[1](d[1])) // end at the actual 'y' position
+      .attr('height', (d) => axes[1](d[0]) - axes[1](d[1])); // end at the actual height
+  }
+
+  protected updated() {
+    if (this.stack && this.xScale && this.yScale && this.barGroupPath) {
+      const stackedData = this.stack(
+        this.data.map((d) => {
+          const entry: ExtendedBarChartData = { ...d };
+          d.yUnit.forEach((value, i) => {
+            entry[i.toString()] = value;
+          });
+          return entry;
+        })
+      );
+
+      const color = d3.scaleOrdinal([
+        '#356F7B',
+        '#6195A1',
+        '#8DBBC7',
+        '#B9E1ED',
+      ]);
+
+      const axes = [this.xScale, this.yScale];
+
+      // Update the groups
+      const groups = this.barGroupPath
+        .selectAll<SVGGElement, number[]>('g')
+        .data(stackedData);
+
+      // Handle the groups that should exit
+      groups.exit().remove();
+
+      // Handle the groups that should enter
+      const groupsEnter = groups
+        .enter()
+        .append('g')
+        .attr('fill', (d) => color(d.key));
+
+      // Merge the enter and update selections
+      const groupsMerge = groups.merge(groupsEnter);
+
+      // Update the bars within the groups
+      const bars = groupsMerge.selectAll('rect').data((d) => d);
+
+      // Handle the bars that should exit
+      bars.exit().remove();
+
+      // Handle the bars that should enter
+      const barsEnter = bars
+        .enter()
+        .append('rect')
+        .attr('x', (d) => axes[0](d.data.time))
+        .attr('y', this.yScale(0)) // initial 'y' position at bottom of chart
+        .attr('height', 0) // initial height is zero
+        .attr('width', 30);
+
+      // Merge the enter and update selections
+      const barsMerge = bars.merge(barsEnter);
+
+      // Transition the bars to their new position
+      barsMerge
+        .transition() // start a transition
+        .duration(2000) // duration 2 seconds
+        .attr('x', (d) => axes[0](d.data.time))
+        .attr('y', (d) => axes[1](d[1])) // end at the actual 'y' position
+        .attr('height', (d) => axes[1](d[0]) - axes[1](d[1])); // end at the actual height
+    }
   }
 
   render() {
