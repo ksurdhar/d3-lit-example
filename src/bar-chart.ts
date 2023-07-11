@@ -72,12 +72,6 @@ export class BarChart extends LitElement {
       return { time: new Date(2023, 5, 15, 9, idx * 5), yUnit };
     });
     this.data = newData;
-    console.log('randomizing');
-
-    const maxYLength = Math.max(...newData.map((d) => d.yUnit.length));
-    const keys = Array.from({ length: maxYLength }, (_, i) => i.toString());
-
-    this.stack = d3.stack<BarChartData>().keys(keys);
   }
 
   protected firstUpdated(_changedProperties: PropertyValues) {
@@ -94,8 +88,8 @@ export class BarChart extends LitElement {
     this.yScale = axes[1];
 
     const maxYLength = Math.max(...this.data.map((d) => d.yUnit.length));
-    const keys = Array.from({ length: maxYLength }, (_, i) => i.toString());
-    this.stack = d3.stack<BarChartData>().keys(keys);
+    const indicies = Array.from({ length: maxYLength }, (_, i) => i.toString());
+    this.stack = d3.stack<BarChartData>().keys(indicies);
 
     const color = d3.scaleOrdinal(['#356F7B', '#6195A1', '#8DBBC7', '#B9E1ED']);
 
