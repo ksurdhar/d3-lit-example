@@ -95,17 +95,7 @@ export class BarChart extends LitElement {
 
     const maxYLength = Math.max(...this.data.map((d) => d.yUnit.length));
     const keys = Array.from({ length: maxYLength }, (_, i) => i.toString());
-
     this.stack = d3.stack<BarChartData>().keys(keys);
-    const stackedData = this.stack(
-      this.data.map((d) => {
-        const entry: ExtendedBarChartData = { ...d };
-        d.yUnit.forEach((value, i) => {
-          entry[i.toString()] = value;
-        });
-        return entry;
-      })
-    );
 
     const color = d3.scaleOrdinal(['#356F7B', '#6195A1', '#8DBBC7', '#B9E1ED']);
 
@@ -113,7 +103,7 @@ export class BarChart extends LitElement {
 
     this.barGroupPath
       .selectAll('g')
-      .data(stackedData)
+      .data(this.getStackedData() as d3.Series<BarChartData, string>[])
       .enter()
       .append('g')
       .attr('fill', (d) => color(d.key))
@@ -123,13 +113,33 @@ export class BarChart extends LitElement {
       .append('rect')
       .attr('x', (d) => axes[0](d.data.time))
       .attr('width', 30)
-      .attr('y', (d) => axes[1](d[1])) // end at the actual 'y' position
-      .attr('height', (d) => axes[1](d[0]) - axes[1](d[1])); // end at the actual height
+      .attr('y', (d) => axes[1](d[1]))
+      .attr('height', (d) => axes[1](d[0]) - axes[1](d[1]));
   }
 
   protected updated() {
     if (this.stack && this.xScale && this.yScale && this.barGroupPath) {
-      const stackedData = this.stack(
+      const axes = [this.xScale, this.yScale];
+
+      const groups = this.barGroupPath
+        .selectAll<SVGGElement, number[]>('g')
+        .data(this.getStackedData() as d3.Series<BarChartData, string>[]);
+
+      const bars = groups
+        .selectAll<SVGRectElement, number[]>('rect')
+        .data((d) => d);
+
+      bars
+        .transition()
+        .duration(2000)
+        .attr('y', (d) => axes[1](d[1]))
+        .attr('height', (d) => axes[1](d[0]) - axes[1](d[1]));
+    }
+  }
+
+  private getStackedData() {
+    if (this.stack) {
+      return this.stack(
         this.data.map((d) => {
           const entry: ExtendedBarChartData = { ...d };
           d.yUnit.forEach((value, i) => {
@@ -138,58 +148,8 @@ export class BarChart extends LitElement {
           return entry;
         })
       );
-
-      const color = d3.scaleOrdinal([
-        '#356F7B',
-        '#6195A1',
-        '#8DBBC7',
-        '#B9E1ED',
-      ]);
-
-      const axes = [this.xScale, this.yScale];
-
-      // Update the groups
-      const groups = this.barGroupPath
-        .selectAll<SVGGElement, number[]>('g')
-        .data(stackedData);
-
-      // Handle the groups that should exit
-      groups.exit().remove();
-
-      // Handle the groups that should enter
-      const groupsEnter = groups
-        .enter()
-        .append('g')
-        .attr('fill', (d) => color(d.key));
-
-      // Merge the enter and update selections
-      const groupsMerge = groups.merge(groupsEnter);
-
-      // Update the bars within the groups
-      const bars = groupsMerge.selectAll('rect').data((d) => d);
-
-      // Handle the bars that should exit
-      bars.exit().remove();
-
-      // Handle the bars that should enter
-      const barsEnter = bars
-        .enter()
-        .append('rect')
-        .attr('x', (d) => axes[0](d.data.time))
-        .attr('y', this.yScale(0)) // initial 'y' position at bottom of chart
-        .attr('height', 0) // initial height is zero
-        .attr('width', 30);
-
-      // Merge the enter and update selections
-      const barsMerge = bars.merge(barsEnter);
-
-      // Transition the bars to their new position
-      barsMerge
-        .transition() // start a transition
-        .duration(2000) // duration 2 seconds
-        .attr('x', (d) => axes[0](d.data.time))
-        .attr('y', (d) => axes[1](d[1])) // end at the actual 'y' position
-        .attr('height', (d) => axes[1](d[0]) - axes[1](d[1])); // end at the actual height
+    } else {
+      return d3.stack<BarChartData>().keys([]);
     }
   }
 
