@@ -169,96 +169,96 @@ export class LineChart extends LitElement {
     //   .style('stroke', 'black')
     //   .style('fill', 'white');
 
-    // const tooltip = d3
-    //   .select('#d3-chart')
-    //   .append('div')
-    //   .style('opacity', 0)
-    //   .attr('class', 'tooltip')
-    //   .style('background-color', 'white')
-    //   .style('border', 'solid')
-    //   .style('border-width', '2px')
-    //   .style('border-radius', '5px')
-    //   .style('padding', '5px')
-    //   .style('position', 'absolute');
+    const tooltip = d3
+      .select('.line-chart')
+      .append('div')
+      .style('opacity', 0)
+      .attr('class', 'tooltip')
+      .style('background-color', 'white')
+      .style('border', 'solid')
+      .style('border-width', '2px')
+      .style('border-radius', '5px')
+      .style('padding', '5px')
+      .style('position', 'absolute');
 
-    // const mouseover = () => {
-    //   tooltip.style('opacity', 1);
-    //   if (this.focusCircle) this.focusCircle.style('opacity', 1);
-    // };
+    const mouseover = () => {
+      tooltip.style('opacity', 1);
+      // if (this.focusCircle) this.focusCircle.style('opacity', 1);
+    };
 
-    // const mousemove = (e: MouseEvent) => {
-    //   // Select the path element of the line chart
-    //   const pathEl = this.linesPath?.node();
-    //   if (!pathEl) return;
-    //   if (!this.focusCircle) return;
+    const mousemove = (e: MouseEvent) => {
+      // Select the path element of the line chart
+      const pathEl = this.linePaths[0]?.node();
+      if (!pathEl) return;
+      // if (!this.focusCircle) return;
 
-    //   // Convert the mouse event's x-coordinate into the corresponding data value
-    //   const x0 = xScale.invert(d3.pointer(e, this)[0]) as Date;
+      // Convert the mouse event's x-coordinate into the corresponding data value
+      const x0 = xScale.invert(d3.pointer(e, this)[0]) as Date;
 
-    //   // Convert the data value back to pixel coordinates
-    //   const x0Pixel = xScale(x0);
+      // Convert the data value back to pixel coordinates
+      const x0Pixel = xScale(x0);
 
-    //   // Find the index of the data item closest to the mouse's x-coordinate
-    //   const i = d3
-    //     .bisector((d: LineChartData) => d.time)
-    //     .left(this.data, x0, 1);
+      // Find the index of the data item closest to the mouse's x-coordinate
+      const i = d3
+        .bisector((d: LineChartData) => d.time)
+        .left(this.data, x0, 1);
 
-    //   // Compare the mouse's x-coordinate to the data items before and after it to decide which one it's closest to
-    //   const d0 = this.data[i - 1];
-    //   const d1 = this.data[i];
-    //   const d =
-    //     x0.getTime() - d0.time.getTime() > d1.time.getTime() - x0.getTime()
-    //       ? d1
-    //       : d0;
+      // Compare the mouse's x-coordinate to the data items before and after it to decide which one it's closest to
+      const d0 = this.data[i - 1];
+      const d1 = this.data[i];
+      const d =
+        x0.getTime() - d0.time.getTime() > d1.time.getTime() - x0.getTime()
+          ? d1
+          : d0;
 
-    //   // Perform binary search on the path to find the point on the line that's closest to the mouse's x-coordinate
-    //   let beginning = 0;
-    //   let end = pathEl.getTotalLength();
-    //   let target = null;
-    //   let pos;
+      // Perform binary search on the path to find the point on the line that's closest to the mouse's x-coordinate
+      let beginning = 0;
+      let end = pathEl.getTotalLength();
+      let target = null;
+      let pos;
 
-    //   while (true) {
-    //     target = Math.floor((beginning + end) / 2);
-    //     pos = pathEl.getPointAtLength(target);
-    //     if ((target === end || target === beginning) && pos.x !== x0Pixel) {
-    //       break;
-    //     }
-    //     if (pos.x > x0Pixel) end = target;
-    //     else if (pos.x < x0Pixel) beginning = target;
-    //     else break;
-    //   }
+      while (true) {
+        target = Math.floor((beginning + end) / 2);
+        pos = pathEl.getPointAtLength(target);
+        if ((target === end || target === beginning) && pos.x !== x0Pixel) {
+          break;
+        }
+        if (pos.x > x0Pixel) end = target;
+        else if (pos.x < x0Pixel) beginning = target;
+        else break;
+      }
 
-    //   // Move the focus circle to the point on the line closest to the mouse's x-coordinate
-    //   this.focusCircle.attr('cx', pos.x).attr('cy', pos.y);
+      // Move the focus circle to the point on the line closest to the mouse's x-coordinate
+      // this.focusCircle.attr('cx', pos.x).attr('cy', pos.y);
 
-    //   // Show the focus line at the position of the focus circle
-    //   if (this.focusLine) {
-    //     this.focusLine
-    //       .style('opacity', 1)
-    //       .attr('x1', pos.x)
-    //       .attr('y1', pos.y)
-    //       .attr('x2', pos.x)
-    //       .attr('y2', this.height - margin.bottom);
-    //   }
+      // Show the focus line at the position of the focus circle
+      // if (this.focusLine) {
+      //   this.focusLine
+      //     .style('opacity', 1)
+      //     .attr('x1', pos.x)
+      //     .attr('y1', pos.y)
+      //     .attr('x2', pos.x)
+      //     .attr('y2', this.height - margin.bottom);
+      // }
 
-    //   // Show the tooltip with the data value closest to the mouse's x-coordinate
-    //   tooltip
-    //     .style('left', d3.pointer(e)[0] + 30 + 'px')
-    //     .style('top', d3.pointer(e)[1] + 45 + 'px')
-    //     .html('yUnit: ' + d.yUnit);
-    // };
+      // Show the tooltip with the data value closest to the mouse's x-coordinate
+      tooltip
+        .style('left', d3.pointer(e)[0] + 25 + 'px')
+        .style('top', d3.pointer(e)[1] + 15 + 'px')
+        .html('yUnit: ' + d.yUnit);
+    };
 
-    // const mouseleave = () => {
-    //   tooltip.style('opacity', 0);
-    //   if (this.focusCircle) this.focusCircle.style('opacity', 0);
-    //   if (this.focusLine) this.focusLine.style('opacity', 0);
-    //   d3.select(this).style('stroke', 'none').style('opacity', 0.8);
-    // };
+    const mouseleave = () => {
+      tooltip.style('opacity', 0);
+      // if (this.focusCircle) this.focusCircle.style('opacity', 0);
+      // if (this.focusLine) this.focusLine.style('opacity', 0);
+      // d3.select(this).style('stroke', 'none').style('opacity', 0.8);
+    };
 
-    // d3.select('#d3-chart')
-    // .on('mouseover', () => mouseover())
-    // .on('mousemove', (e) => mousemove(e))
-    // .on('mouseleave', () => mouseleave());
+    d3.select('.line-chart')
+    .on('mouseover', () => mouseover())
+    .on('mousemove', (e) => mousemove(e))
+    .on('mouseleave', () => mouseleave());
   }
 
   protected updated() {
