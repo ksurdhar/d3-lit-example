@@ -65,7 +65,7 @@ export class LineChart extends LitElement {
       { time: new Date(2023, 5, 15, 9, 35), yUnit: [16, 19] },
       { time: new Date(2023, 5, 15, 9, 40), yUnit: [25, 28] },
     ];
-    this.yUnitLabels = ['p90', 'p99'];
+    this.yUnitLabels = ['P90', 'P99'];
     this.yUnitColors = ['185, 37, 0', '255, 139, 0'];
   }
 
@@ -172,14 +172,8 @@ export class LineChart extends LitElement {
     const tooltip = d3
       .select('.line-chart')
       .append('div')
-      .style('opacity', 0)
+      // .style('opacity', 0)
       .attr('class', 'tooltip')
-      .style('background-color', 'white')
-      .style('border', 'solid')
-      .style('border-width', '2px')
-      .style('border-radius', '5px')
-      .style('padding', '5px')
-      .style('position', 'absolute');
 
     const mouseover = () => {
       tooltip.style('opacity', 1);
@@ -242,10 +236,21 @@ export class LineChart extends LitElement {
       // }
 
       // Show the tooltip with the data value closest to the mouse's x-coordinate
-      tooltip
-        .style('left', d3.pointer(e)[0] + 25 + 'px')
+
+        let fragments = d.yUnit.map((val, i) => {
+          return `<div>${this.yUnitLabels[i]}: ${val}</div>`
+        })
+        const hours = d.time.getHours().toString().padStart(2, '0');
+        const minutes = d.time.getMinutes().toString().padStart(2, '0');
+        const timeString = `${hours}:${minutes}`
+
+        fragments = fragments.concat(`<div>${timeString}</div>`)
+        
+        tooltip
+        .style('left', d3.pointer(e)[0] + 20 + 'px')
         .style('top', d3.pointer(e)[1] + 15 + 'px')
-        .html('yUnit: ' + d.yUnit);
+        .html(`<div>${fragments.join('')}</div>`);
+
     };
 
     const mouseleave = () => {
